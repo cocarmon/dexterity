@@ -1,7 +1,9 @@
-import { useState } from "react"
-import { PuzzlePieceIcon, DocumentIcon, Cog6ToothIcon} from "@heroicons/react/24/outline"
+import { useState } from "react";
 import { CubeIcon } from "@heroicons/react/24/solid";
-export default function MainLayout() {
+import { PuzzlePieceIcon, DocumentIcon, Cog6ToothIcon} from "@heroicons/react/24/outline";
+
+
+export default function MainLayout({children}) {
     const [active,setActive] = useState({document: true, plugin: false, settings: false})
     const handleSetActive = (e) => {
         const {id} = e.currentTarget
@@ -30,7 +32,7 @@ export default function MainLayout() {
             <button className="bg-yellow-400 rounded-sm text-zinc-800 px-2 font-medium mr-6">Share</button>
         </div>
         {/* Sidebar */}
-        <div className="bg-zinc-800 w-10 h-screen text-center border-t-2 border-zinc-900">
+        <div className="bg-zinc-800 w-10 h-screen text-center absolute">
             <div>
                 <div id="document" className={`pt-2  ${ active.document ? "text-zinc-100 border-l-2 border-white" : "text-zinc-400"} `} onClick={handleSetActive}>
                     <button className={`hover:text-zinc-200 hover:cursor-pointer `}><DocumentIcon width={24} height={24}/></button>
@@ -43,5 +45,8 @@ export default function MainLayout() {
                 <button className="hover:text-zinc-200 hover:cursor-pointer"><Cog6ToothIcon width={24} height={24}/></button>
             </div>
         </div>
+        <main className="pl-10">
+            {children}
+        </main>
     </>
 };
