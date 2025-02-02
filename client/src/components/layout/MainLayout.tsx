@@ -1,11 +1,26 @@
-import { useState } from "react";
-import { CubeIcon } from "@heroicons/react/24/solid";
+import { ChangeEvent, useState,useRef, useEffect } from "react";
+import { lineGenerator,Parser,render,tokenize } from "@/util/parser";
 import { PuzzlePieceIcon, DocumentIcon, Cog6ToothIcon} from "@heroicons/react/24/outline";
 
+import Header from "@/components/ui/headers/MainHeader";
+import EditorHeader from "@/components/ui/headers/EditorHeader";
+import { useEditorHeaderStore } from "@/store/useEditorHeaderStore";
 
-export default function MainLayout({children}) {
-    const [active,setActive] = useState({document: true, plugin: false, settings: false})
-    const handleSetActive = (e) => {
+export default function MainLayout() {
+    const printRef = useRef(null);
+    const previewRef = useRef(null);
+
+    const file = useEditorHeaderStore.use.file();
+    const setFile = useEditorHeaderStore.use.setFile();
+    const setPrint = useEditorHeaderStore.use.setPrint();
+    const [active,setActive] = useState({document: true, plugin: false, settings: false});
+
+
+    useEffect(()=>{
+        setPrint(printRef)
+    },[printRef,setPrint]);
+
+    const handleSetActive = (e: React.MouseEvent<HTMLDivElement>) => {
         const {id} = e.currentTarget
         if (id == 'document') {
             setActive({document: true, plugin: false, settings: false})
@@ -15,22 +30,27 @@ export default function MainLayout({children}) {
             setActive({document: false, plugin: false, settings: true})
         }
     };
+
+    const handleFileContentChange = (e:ChangeEvent<HTMLTextAreaElement>) => {
+        setFile(e.target.value);
+    };
+
+    const handleRender = () => {
+        const tokens = []
+        for (const line of lineGenerator(file)){
+            const result = tokenize(line.trim());
+            if (result) {
+                tokens.push(result);
+            }
+        };
+        const parser = new Parser(tokens);
+        const htmlContent = render(parser.parse());
+        if (previewRef.current) {
+            previewRef.current.innerHTML = htmlContent;
+        }    
+    };
     return <>
-        {/* Header */}
-        <div className="bg-zinc-800 text-zinc-100 h-8 flex items-center justify-between">
-            <div className="flex items-center">
-                <CubeIcon className="text-yellow-400 ml-3" width={20} height={20}/>
-                <ul className="pl-3 text-md flex space-x-3">
-                    <li>
-                        <label htmlFor="file-upload" className="hover:cursor-pointer hover:text-zinc-300 ">File</label>
-                        <input id="file-upload" className="hidden" type="file"/>
-                    </li>
-                    <li className="hover:text-zinc-300 hover:cursor-pointer">Save</li>
-                    <li className="pl-8"><input type="text" className="rounded-sm pl-2 bg-zinc-700" value="Hello_word.txt"/></li>
-                </ul>
-            </div>
-            <button className="bg-yellow-400 rounded-sm text-zinc-800 px-2 font-medium mr-6">Share</button>
-        </div>
+        <Header/>
         {/* Sidebar */}
         <div className="bg-zinc-800 w-10 h-screen text-center absolute">
             <div>
@@ -46,7 +66,13 @@ export default function MainLayout({children}) {
             </div>
         </div>
         <main className="pl-10">
-            {children}
+            <EditorHeader handleRender={handleRender}/>
+            <div className="flex h-[96vh]">
+                <textarea ref={printRef} className="w-1/2  bg-zinc-900 border-r-2 border-zinc-500 text-zinc-300 resize-none focus:outline-none" value={file} onChange={handleFileContentChange} autoComplete="on" autoCorrect="on" cols={100}>
+                    {file}
+                </textarea>
+                <div ref={previewRef} className="w-1/2 bg-white p-5 prose"  />
+            </div>
         </main>
     </>
 };
